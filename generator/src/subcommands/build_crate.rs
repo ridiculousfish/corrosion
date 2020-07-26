@@ -45,7 +45,11 @@ pub fn invoke(
         matches.value_of(PACKAGE).unwrap(),
         "--manifest-path",
         manifest_path,
+        // "--target-dir",
+        // "cargo/build",
     ]);
+
+    cargo.env("CARGO_TARGET_DIR", "cargo/build");
 
     if matches.is_present(RELEASE) {
         cargo.arg("--release");

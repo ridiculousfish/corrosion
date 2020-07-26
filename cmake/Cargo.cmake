@@ -101,6 +101,11 @@ function(_add_cargo_build)
         endforeach()
     endif()
 
+    # set(GEN_RUST_FLAGS_DEBUG          $<$<CONFIG:Debug>:${CARGO_RUST_FLAGS_DEBUG}>)
+    # set(GEN_RUST_FLAGS_RELEASE        $<$<CONFIG:Release>:${CARGO_RUST_FLAGS_RELEASE}>)
+    # set(GEN_RUST_FLAGS_MINSIZEREL     $<$<CONFIG:MinSizeRel>:${CARGO_RUST_FLAGS_MINSIZEREL}>)
+    # set(GEN_RUST_FLAGS_RELWITHDEBINFO $<$<CONFIG:RelWithDebInfo>:${CARGO_RUST_FLAGS_RELWITHDEBINFO}>)
+
     add_custom_target(
         cargo-build_${target_name}
         ALL
@@ -112,6 +117,8 @@ function(_add_cargo_build)
                 ${link_prefs}
                 ${compilers}
                 CMAKECARGO_LINKER_LANGUAGES=$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CARGO_DEPS_LINKER_LANGUAGES>>
+                # CARGO_BUILD_RUSTFLAGS="${CARGO_RUST_FLAGS} ${GEN_RUST_FLAGS_DEBUG} ${GEN_RUST_FLAGS_RELEASE} ${GEN_RUST_FLAGS_RELWITHDEBINFO}"
+                # CARGO_BUILD_RUSTFLAGS=$<$<CONFIG:MinSizeRel>:"-C;opt-level=z">
             ${_CMAKE_CARGO_GEN}
                 --manifest-path "${path_to_toml}"
                 build-crate

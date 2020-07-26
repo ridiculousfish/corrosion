@@ -194,7 +194,6 @@ function(_gen_config config_type use_config_dir)
     file(WRITE ${CARGO_CONFIG}
 "\
 [build]
-target-dir=\"cargo/build\"
 ")
 
     string(REPLACE ";" "\", \"" RUSTFLAGS "${CARGO_RUST_FLAGS}" "${CARGO_RUST_FLAGS_${UPPER_CONFIG_TYPE}}")
