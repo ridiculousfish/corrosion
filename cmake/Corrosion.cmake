@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 option(CORROSION_VERBOSE_OUTPUT "Enables verbose output from Corrosion and Cargo" OFF)
+option(CORROSION_VENDOR_DEPENDENCIES "Builds dependencies in-tree" OFF)
 
 find_package(Rust REQUIRED)
 
@@ -437,3 +438,22 @@ function(corrosion_install)
         message(FATAL_ERROR "install(EXPORT ...) not yet implemented")
     endif()
 endfunction()
+
+if (CORROSION_VENDOR_DEPENDENCIES)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        bindgen
+        GIT_REPOSITORY https://github.com/rust-lang/rust-bindgen.git
+        GIT_TAG v0.54.1
+    )
+
+    FetchContent_GetProperties(bindgen)
+    if(NOT bindgen_POPULATED)
+        FetchContent_Populate(bindgen)
+        corrosion_add_crate(MANIFEST_PATH ${bindgen_SOURCE_DIR}/Cargo.toml)
+        add_executable(Rust::Bindgen ALIAS bindgen)
+    endif()
+else()
+    find_package(Bindgen)
+endif()
