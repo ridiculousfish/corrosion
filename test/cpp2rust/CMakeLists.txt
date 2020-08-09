@@ -1,4 +1,4 @@
-add_crate(rust/Cargo.toml)
+corrosion_add_crate(MANIFEST_PATH rust/Cargo.toml)
 cargo_link_libraries(rust-exe cpp-lib)
 
 add_library(cpp-lib lib.cpp)

@@ -47,7 +47,7 @@ endif()
 # If Corrosion is a subdirectory, do not enable its install code
 if (NOT CORROSION_IS_SUBDIRECTORY)
     # Builds the generator executable
-    add_crate(generator/Cargo.toml)
+    corrosion_add_crate(MANIFEST_PATH generator/Cargo.toml)
 
     # Set the link language to CXX since it's already enabled
     corrosion_set_linker_language(corrosion-generator CXX)
