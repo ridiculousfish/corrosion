@@ -21,6 +21,7 @@ const CONFIGURATION_TYPES: &str = "configuration-types";
 const CONFIGURATION_ROOT: &str = "configuration-root";
 const TARGET: &str = "target";
 const CARGO_VERSION: &str = "cargo-version";
+const CURRENT_BINARY_DIR: &str = "current-binary-dir";
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name(GEN_CMAKE)
@@ -79,14 +80,12 @@ pub fn subcommand() -> App<'static, 'static> {
                 .value_name("FILE")
                 .help("Output CMake file name. Defaults to stdout."),
         )
-}
-
-fn config_type_target_folder(config_type: Option<&str>) -> &'static str {
-    match config_type {
-        Some("Debug") | None => "debug",
-        Some("Release") | Some("RelWithDebInfo") | Some("MinSizeRel") => "release",
-        Some(config_type) => panic!("Unknown config_type {}!", config_type),
-    }
+        .arg(
+            Arg::with_name(CURRENT_BINARY_DIR)
+                .long("current-binary-dir")
+                .value_name("DIR")
+                .help("Output binary dir."),
+        )
 }
 
 pub fn invoke(
@@ -173,6 +172,8 @@ cmake_minimum_required (VERSION 3.12)
 
     let metadata_manifest_path = Path::new(&args.metadata.workspace_root).join("Cargo.toml");
 
+    let binary_dir = Path::new(matches.value_of(CURRENT_BINARY_DIR).unwrap());
+
     for (config_type, config_folder) in config_folders {
         let current_dir = std::env::current_dir().expect("Could not get current directory!");
         std::env::set_current_dir(config_folder)
@@ -181,15 +182,15 @@ cmake_minimum_required (VERSION 3.12)
         let mut local_metadata_cmd = cargo_metadata::MetadataCommand::new();
         local_metadata_cmd.manifest_path(Path::new(&metadata_manifest_path));
 
-        // Re-gathering the cargo metadata from here gets us a target_directory scoped to the
-        // configuration type.
-        let local_metadata = local_metadata_cmd
-            .exec()
-            .expect("Could not open Crate specific metadata!");
+        // let build_path = Path::new()
 
-        let build_path = Path::new(&local_metadata.target_directory)
-            .join(matches.value_of(TARGET).unwrap_or(""))
-            .join(config_type_target_folder(config_type));
+        // let build_path = binary_dir.join(config_type);
+
+        let build_path = if let Some(config_type) = config_type {
+            binary_dir.join(config_type)
+        } else {
+            binary_dir.to_owned()
+        };
 
         for target in &targets {
             target.emit_cmake_config_info(

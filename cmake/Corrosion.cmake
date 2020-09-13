@@ -126,18 +126,20 @@ function(_add_cargo_build)
     endif()
 
     # BYPRODUCTS doesn't support generator expressions, so only add BYPRODUCTS for single-config generators
-    if (NOT CMAKE_CONFIGURATION_TYPES)
-        if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE STREQUAL Debug)
-            set(build_type_dir debug)
-        else()
-            set(build_type_dir release)
-        endif()
+    set(cargo_build_dir "${CMAKE_BINARY_DIR}/${build_dir}/cargo/build/${_CORROSION_RUST_CARGO_TARGET}/$<IF:$<OR:$<CONFIG:Debug>,$<CONFIG:>>,debug,release>")
+    foreach(byproduct_file ${ACB_BYPRODUCTS})
+        list(APPEND byproduct_src ${cargo_build_dir}/${byproduct_file})
+    endforeach()
 
-        set(cargo_build_dir "${CMAKE_BINARY_DIR}/${build_dir}/cargo/build/${_CORROSION_RUST_CARGO_TARGET}/${build_type_dir}")
-        foreach(byproduct_file ${ACB_BYPRODUCTS})
-            list(APPEND byproducts "${cargo_build_dir}/${byproduct_file}")
-        endforeach()
+    if (CMAKE_CONFIGURATION_TYPES)
+        set(target_dir "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+    else()
+        set(target_dir "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
+
+    foreach(byproduct_file ${ACB_BYPRODUCTS})
+        list(APPEND byproducts ${target_dir}/${byproduct_file})
+    endforeach()
 
     add_custom_target(
         cargo-build_${target_name}
@@ -157,6 +159,7 @@ function(_add_cargo_build)
                     $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:>>>:--release>
                     --target ${_CORROSION_RUST_CARGO_TARGET}
                     --package ${package_name}
+            && ${CMAKE_COMMAND} -E copy ${byproduct_src} ${target_dir}
             BYPRODUCTS ${byproducts}
         # The build is conducted in root build directory so that cargo
         # dependencies are shared
@@ -232,6 +235,7 @@ function(add_crate path_to_toml)
                     ${_CMAKE_CARGO_TARGET}
                     ${_CMAKE_CARGO_CONFIGURATION_TYPES}
                     --cargo-version ${_CORROSION_CARGO_VERSION}
+                    --current-binary-dir ${CMAKE_CURRENT_BINARY_DIR}
                     -o ${generated_cmake}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         RESULT_VARIABLE ret)
