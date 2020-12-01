@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
-# search for Cargo here and set up a bunch of cool flags and stuff
 include(FindPackageHandleStandardArgs)
 
-# Falls back to the rustup proxies if a toolchain cannot be found in the user's path
 find_program(Bindgen_EXECUTABLE bindgen PATHS $ENV{HOME}/.cargo/bin)
 
 execute_process(

@@ -6,7 +6,8 @@ license = "MIT"
 edition = "2018"
 build = "build.rs"
 
-[dependencies]
+[dependencies.corrosion]
+path = "../../../integrator"
 
-[build-dependencies.cmake-cargo-build]
+[build-dependencies.corrosion]
 path = "../../../integrator"

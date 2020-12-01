@@ -1,6 +1,4 @@
-use std::os::raw::{c_char};
-
-extern "C" {fn cpp_function(name: *const c_char);}
+corrosion::import_bindings!();
 
 fn greeting(name: &str) {
     let name = std::ffi::CString::new(name).unwrap();
@@ -10,6 +8,8 @@ fn greeting(name: &str) {
 }
 
 fn main() {
+    println!("{}", unsafe { cpp_add(7, 8) });
+
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     if args.len() >= 1 {
         greeting(&args[0]);

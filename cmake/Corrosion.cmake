@@ -56,6 +56,26 @@ set(
 set(_CORROSION_CARGO_VERSION ${Rust_CARGO_VERSION} CACHE INTERNAL "cargo version used by corrosion")
 set(_CORROSION_RUST_CARGO_TARGET ${Rust_CARGO_TARGET} CACHE INTERNAL "target triple used by corrosion")
 
+# Find Rust Bindgen
+if (CORROSION_VENDOR_DEPENDENCIES)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        bindgen
+        GIT_REPOSITORY https://github.com/rust-lang/rust-bindgen.git
+        GIT_TAG v0.54.1
+    )
+
+    FetchContent_GetProperties(bindgen)
+    if(NOT bindgen_POPULATED)
+        FetchContent_Populate(bindgen)
+        corrosion_add_crate(MANIFEST_PATH ${bindgen_SOURCE_DIR}/Cargo.toml)
+        add_executable(Rust::Bindgen ALIAS bindgen)
+    endif()
+else()
+    find_package(Bindgen)
+endif()
+
 function(_add_cargo_build)
     set(options "")
     set(one_value_args PACKAGE TARGET MANIFEST_PATH)
@@ -84,8 +104,8 @@ function(_add_cargo_build)
         set (build_dir .)
     endif()
 
-    set(link_libs "$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CARGO_LINK_LIBRARIES>>")
-    set(search_dirs "$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CARGO_LINK_DIRECTORIES>>")
+    set(link_libs "$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CORROSION_LINK_LIBRARIES>>")
+    set(search_dirs "$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CORROSION_LINK_DIRECTORIES>>")
 
     # For MSVC targets, don't mess with linker preferences.
     # TODO: We still should probably make sure that rustc is using the correct cl.exe to link programs.
@@ -136,12 +156,13 @@ function(_add_cargo_build)
         ALL
         COMMAND
             ${CMAKE_COMMAND} -E env
-                CMAKECARGO_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
-                CMAKECARGO_LINK_LIBRARIES=${link_libs}
-                CMAKECARGO_LINK_DIRECTORIES=${search_dirs}
+                CORROSION_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                CORROSION_LINK_LIBRARIES=${link_libs}
+                CORROSION_LINK_DIRECTORIES=${search_dirs}
                 ${link_prefs}
                 ${compilers}
-                CMAKECARGO_LINKER_LANGUAGES="$<TARGET_PROPERTY:cargo-build_${target_name},LINKER_LANGUAGE>$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CARGO_DEPS_LINKER_LANGUAGES>>"
+                CMAKECARGO_LINKER_LANGUAGES="$<TARGET_PROPERTY:cargo-build_${target_name},LINKER_LANGUAGE>$<GENEX_EVAL:$<TARGET_PROPERTY:cargo-build_${target_name},CORROSION_DEPS_LINKER_LANGUAGES>>"
+                CORROSION_BINDING_FILES="C:\\\\Users\\\\andre\\\\Code\\\\corrosion\\\\build\\\\test\\\\cpp2rust\\\\cpp-lib.rs"
             ${_CORROSION_GENERATOR}
                 --manifest-path "${path_to_toml}"
                 build-crate
@@ -174,6 +195,9 @@ function(corrosion_add_crate)
     set(MULTI_VALUE_KEYWORDS)
     cmake_parse_arguments(COR "${OPTIONS}" "${ONE_VALUE_KEYWORDS}" "${MULTI_VALUE_KEYWORDS}" ${ARGN})
 
+    if (NOT EXISTS COR_MANIFEST_PATH)
+        message(FATAL_ERROR "MANIFEST_PATH is a required keyword to corrosion_add_crate")
+    endif()
 
     if (NOT IS_ABSOLUTE "${COR_MANIFEST_PATH}")
         set(COR_MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${COR_MANIFEST_PATH})
@@ -241,6 +265,8 @@ function(corrosion_add_crate)
 endfunction()
 
 function(add_crate path_to_toml)
+    message(DEPRECATION "add_crate is deprecated. Switch to corrosion_add_crate.")
+
     corrosion_add_crate(MANIFEST_PATH ${path_to_toml})
 endfunction(add_crate)
 
@@ -251,20 +277,20 @@ function(corrosion_set_linker_language target_name language)
     )
 endfunction()
 
-function(cargo_link_libraries target_name)
+function(corrosion_link_libraries target_name)
     add_dependencies(cargo-build_${target_name} ${ARGN})
     foreach(library ${ARGN})
         set_property(
             TARGET cargo-build_${target_name}
             APPEND
-            PROPERTY CARGO_LINK_DIRECTORIES
+            PROPERTY CORROSION_LINK_DIRECTORIES
             $<TARGET_LINKER_FILE_DIR:${library}>
         )
 
         set_property(
             TARGET cargo-build_${target_name}
             APPEND
-            PROPERTY CARGO_DEPS_LINKER_LANGUAGES
+            PROPERTY CORROSION_DEPS_LINKER_LANGUAGES
             $<TARGET_PROPERTY:${library},LINKER_LANGUAGE>
         )
 
@@ -272,10 +298,16 @@ function(cargo_link_libraries target_name)
         set_property(
             TARGET cargo-build_${target_name}
             APPEND
-            PROPERTY CARGO_LINK_LIBRARIES
+            PROPERTY CORROSION_LINK_LIBRARIES
             ${library}
         )
     endforeach()
+endfunction(corrosion_link_libraries)
+
+function(cargo_link_libraries)
+    message(DEPRECATION "cargo_link_libraries is deprecated. Switch to corrosion_link_libraries.")
+
+    corrosion_link_libraries(${ARGN})
 endfunction(cargo_link_libraries)
 
 function(corrosion_install)
@@ -438,22 +470,3 @@ function(corrosion_install)
         message(FATAL_ERROR "install(EXPORT ...) not yet implemented")
     endif()
 endfunction()
-
-if (CORROSION_VENDOR_DEPENDENCIES)
-    include(FetchContent)
-
-    FetchContent_Declare(
-        bindgen
-        GIT_REPOSITORY https://github.com/rust-lang/rust-bindgen.git
-        GIT_TAG v0.54.1
-    )
-
-    FetchContent_GetProperties(bindgen)
-    if(NOT bindgen_POPULATED)
-        FetchContent_Populate(bindgen)
-        corrosion_add_crate(MANIFEST_PATH ${bindgen_SOURCE_DIR}/Cargo.toml)
-        add_executable(Rust::Bindgen ALIAS bindgen)
-    endif()
-else()
-    find_package(Bindgen)
-endif()

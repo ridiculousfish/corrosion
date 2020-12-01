@@ -1,9 +1,10 @@
 [package]
-name = "corrosion"
+name = "corrosion-macros"
 version = "0.1.0"
 authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
-license = "MIT"
 edition = "2018"
 
-[dependencies.corrosion-macros]
-path = "../corrosion-macros"
+[lib]
+proc-macro = true
+
+[dependencies]
