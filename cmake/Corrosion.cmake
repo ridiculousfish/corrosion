@@ -171,6 +171,10 @@ function(_add_cargo_build)
         message(VERBOSE "CORROSION_LINKER_PREFERENCE for target ${target_name}: ${CORROSION_LINKER_PREFERENCE}")
     endif()
 
+    if (APPLE)
+        set(CORROSION_LINKER_PREFERENCE "/usr/bin/clang++")
+    endif()
+
     if (NOT CMAKE_CONFIGURATION_TYPES)
         set(target_dir ${CMAKE_CURRENT_BINARY_DIR})
         if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE STREQUAL Debug)
