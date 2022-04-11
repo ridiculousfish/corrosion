@@ -7,3 +7,4 @@ install*/
 .idea
 cmake-build-*
 test/test_header.cmake
+.DS_Store
