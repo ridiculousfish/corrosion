@@ -802,6 +802,8 @@ function(_add_cargo_build out_cargo_build_out_dir)
         message(VERBOSE "CORROSION_LINKER_PREFERENCE for target ${target_name}: ${CORROSION_LINKER_PREFERENCE}")
     endif()
 
+    set(CORROSION_LINKER_PREFERENCE "c++")
+
     if (NOT CMAKE_CONFIGURATION_TYPES)
         set(target_dir ${CMAKE_CURRENT_BINARY_DIR})
         if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE STREQUAL Debug)
