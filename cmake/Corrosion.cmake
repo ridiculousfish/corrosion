@@ -899,23 +899,6 @@ function(_add_cargo_build out_cargo_build_out_dir)
 
     set(corrosion_cc_rs_flags)
 
-    if(CMAKE_C_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
-        # This variable is read by cc-rs (often used in build scripts) to determine the c-compiler.
-        # It can still be overridden if the user sets the non underscore variant via the environment variables
-        # on the target.
-        list(APPEND corrosion_cc_rs_flags "CC_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_C_COMPILER}")
-    endif()
-    if(CMAKE_CXX_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
-        list(APPEND corrosion_cc_rs_flags "CXX_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_CXX_COMPILER}")
-    endif()
-    # Since we instruct cc-rs to use the compiler found by CMake, it is likely one that requires also
-    # specifying the target sysroot to use. CMake's generator makes sure to pass --sysroot with
-    # CMAKE_OSX_SYSROOT. Fortunately the compilers Apple ships also respect the SDKROOT environment
-    # variable, which we can set for use when cc-rs invokes the compiler.
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_SYSROOT)
-        list(APPEND corrosion_cc_rs_flags "SDKROOT=${CMAKE_OSX_SYSROOT}")
-    endif()
-
     corrosion_add_target_local_rustflags("${target_name}" "$<$<BOOL:${corrosion_link_args}>:-Clink-args=${corrosion_link_args}>")
 
     # todo: this should probably also be guarded by if_not_host_build_condition.
