@@ -257,21 +257,23 @@ function(_add_cargo_build)
 
     set(corrosion_cc_rs_flags)
 
-    if(CMAKE_C_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
-        # This variable is read by cc-rs (often used in build scripts) to determine the c-compiler.
-        # It can still be overridden if the user sets the non underscore variant via the environment variables
-        # on the target.
-        list(APPEND corrosion_cc_rs_flags "CC_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_C_COMPILER}")
-    endif()
-    if(DEFINED ENV{CC})
-        # HOST_CC has a lower priority then CC_<target_triple> for cc-rs.
-        list(APPEND corrosion_cc_rs_flags "HOST_CC=$ENV{CC}")
-    endif()
-    if(CMAKE_CXX_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
-        list(APPEND corrosion_cc_rs_flags "CXX_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_CXX_COMPILER}")
-    endif()
-    if(DEFINED ENV{CXX})
-        list(APPEND corrosion_cc_rs_flags "HOST_CXX=$ENV{CXX}")
+    if (NOT APPLE)
+        if(CMAKE_C_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
+            # This variable is read by cc-rs (often used in build scripts) to determine the c-compiler.
+            # It can still be overridden if the user sets the non underscore variant via the environment variables
+            # on the target.
+            list(APPEND corrosion_cc_rs_flags "CC_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_C_COMPILER}")
+        endif()
+        if(DEFINED ENV{CC})
+            # HOST_CC has a lower priority then CC_<target_triple> for cc-rs.
+            list(APPEND corrosion_cc_rs_flags "HOST_CC=$ENV{CC}")
+        endif()
+        if(CMAKE_CXX_COMPILER AND _CORROSION_RUST_CARGO_TARGET_UNDERSCORE)
+            list(APPEND corrosion_cc_rs_flags "CXX_${_CORROSION_RUST_CARGO_TARGET_UNDERSCORE}=${CMAKE_CXX_COMPILER}")
+        endif()
+        if(DEFINED ENV{CXX})
+            list(APPEND corrosion_cc_rs_flags "HOST_CXX=$ENV{CXX}")
+        endif()
     endif()
 
     corrosion_add_target_rustflags("${target_name}" "$<$<BOOL:${corrosion_link_args}>:-Clink-args=${corrosion_link_args}>")
